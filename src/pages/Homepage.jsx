@@ -1,73 +1,154 @@
 import React from "react";
-import { useNavigate } from "react-router-dom"; // ⬅️ Added for navigation
-import SkinmuseLogo from "../assets/images/skinMuseLogo.png";
-import SkinmuseImage from "../assets/images/skinmuse_image.png";
+import { useNavigate } from "react-router-dom";
 import StarIcon from "../assets/images/star_skinmuse.svg";
-import StarIcon1 from "../assets/images/star1_skinmuse.svg";
 
 export default function Homepage() {
-  const navigate = useNavigate(); // ⬅️ Initialize navigate function
+  const navigate = useNavigate();
 
   return (
-    <div className=" bg-[#FFEDF5] h-full w-full flex justify-center items-center px-10 font-kaisei overflow-x-hidden overflow-clip">
-      <main className="flex justify-between max-md:flex-wrap max-md:mt-32 gap-[30px] h-full w-full items-center  ">
-        {/* Left side with star and text */}
-        <div className="flex flex-col items-start text-left max-w-xl relative">
-          <img
-            src={StarIcon}
-            alt="Star Icon"
-            className="w-10 h-10 absolute -top-10 -left-6"
-          />
+    <div className="relative min-h-screen w-full bg-[#020617] overflow-hidden font-kaisei">
+      {/* Background grids & ambient glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_#1E40AF_0%,_transparent_55%)] opacity-30 animate-pulse-slow" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,_rgba(255,255,255,0.03)_1px,_transparent_1px),linear-gradient(to_bottom,_rgba(255,255,255,0.03)_1px,_transparent_1px)] bg-[size:60px_60px]" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-blue-500/20 rounded-full blur-[160px] animate-pulse-slow" />
 
-          <h1 className="text-5xl font-bold text-pink-700 mb-4 mt-8">
-            You Are Your Own Muse
-          </h1>
+      <main className="relative z-10 flex items-center justify-center min-h-screen px-10">
+        <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+          {/* Left content */}
+          <div className="flex flex-col gap-8">
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 w-fit animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+              <span className="text-sm text-blue-200">
+                AI Skin Analysis System
+              </span>
+            </div>
 
-          <p className="text-lg text-pink-900 mb-6 leading-relaxed">
-            Understand your skin, discover the right products,
-            <br />
-            track what works, and be your own muse.
-          </p>
+            <h1 className="text-5xl md:text-6xl font-semibold text-white leading-tight animate-fade-in">
+              Skincare
+              <br />
+              Engineered for You
+            </h1>
 
-          {/* Line + Happy Users + new star */}
-          <div className="w-full flex flex-col items-center relative">
-            <div className="w-full h-[1px] bg-gray-500 opacity-70 mt-12"></div>
-
-            <img
-              src={StarIcon1}
-              alt="Star Icon"
-              className="w-15h-15 absolute -top-10 right-0.5"
-            />
-
-            <p
-              className="my-10 text-center text-gray-800 text-3xl"
-              style={{
-                fontFamily: "'Julius Sans One', sans-serif",
-                fontWeight: "normal",
-              }}
-            >
-              500 Happy Users, Are You Next?
+            <p className="text-lg text-blue-200 max-w-xl leading-relaxed animate-fade-in delay-200">
+              SkinAI evaluates your skin type, concerns, and routine patterns to
+              intelligently recommend products that adapt with your skin.
             </p>
 
-            <div className="w-full h-[1px] bg-gray-500 opacity-70"></div>
-
-            {/* ⬇️ Sign Up Button with navigation */}
             <button
               onClick={() => navigate("/register")}
-              className="mt-9 px-6 py-2 rounded-full border-2 border-[#A55166] text-[#A55166] hover:bg-[#A55166] hover:text-white transition duration-300 font-inter font-bold"
+              className="mt-6 w-fit px-10 py-3 rounded-full
+                         bg-gradient-to-r from-blue-600 to-blue-500
+                         text-white text-lg font-medium
+                         hover:from-blue-500 hover:to-blue-400
+                         transition-all duration-300
+                         shadow-xl shadow-blue-600/30 transform hover:scale-105"
             >
-              Sign Up Now!
+              Begin Skin Analysis
             </button>
           </div>
-        </div>
 
-        {/* Right side image */}
-        <img
-          src={SkinmuseImage}
-          alt="SkinMuse Illustration"
-          className="h-[400px] w-auto mr-12"
-        />
+          {/* Right animated visual panel */}
+          <div className="relative">
+            <div
+              className="rounded-3xl p-8 bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl space-y-5
+                            hover:scale-105 transition-transform duration-500 ease-in-out"
+            >
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-blue-300 font-semibold animate-pulse-slow">
+                  Skin Insight Preview
+                </span>
+                <img
+                  src={StarIcon}
+                  alt="decor"
+                  className="w-5 h-5 opacity-60 animate-pulse-slow"
+                />
+              </div>
+
+              {/* Animated insights */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center animate-pulse-row">
+                  <span className="text-blue-200 font-medium">Skin Type</span>
+                  <span className="text-white font-semibold">Combination</span>
+                </div>
+
+                <div className="flex justify-between items-center animate-pulse-row delay-100">
+                  <span className="text-blue-200 font-medium">Hydration</span>
+                  <span className="text-white font-semibold">Good</span>
+                </div>
+
+                <div className="flex justify-between items-center animate-pulse-row delay-200">
+                  <span className="text-blue-200 font-medium">Sensitivity</span>
+                  <span className="text-white font-semibold">Low</span>
+                </div>
+
+                <div className="flex justify-between items-center animate-pulse-row delay-300">
+                  <span className="text-blue-200 font-medium">Focus Area</span>
+                  <span className="text-white font-semibold">
+                    Moisturization
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 text-sm text-blue-300 animate-fade-in delay-400">
+                Personalized recommendations generated by AI
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
+
+      {/* Tailwind keyframes for animations */}
+      <style jsx>{`
+        @keyframes pulse-slow {
+          0%,
+          100% {
+            opacity: 0.6;
+          }
+          50% {
+            opacity: 0.9;
+          }
+        }
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes pulse-row {
+          0%,
+          100% {
+            background-color: rgba(255, 255, 255, 0.05);
+          }
+          50% {
+            background-color: rgba(255, 255, 255, 0.15);
+          }
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 3s infinite;
+        }
+        .animate-fade-in {
+          animation: fade-in 1s ease forwards;
+        }
+        .animate-pulse-row {
+          animation: pulse-row 2s infinite;
+        }
+        .delay-100 {
+          animation-delay: 0.1s;
+        }
+        .delay-200 {
+          animation-delay: 0.2s;
+        }
+        .delay-300 {
+          animation-delay: 0.3s;
+        }
+        .delay-400 {
+          animation-delay: 0.4s;
+        }
+      `}</style>
     </div>
   );
 }

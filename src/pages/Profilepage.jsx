@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../../api/axiosinstance";
 
-const ProfilePage = () => {
+export default function ProfilePage() {
   const [name, setName] = useState(
     sessionStorage.getItem("name") !== "undefined"
       ? sessionStorage.getItem("name")
@@ -14,6 +15,7 @@ const ProfilePage = () => {
       ? sessionStorage.getItem("profilePic")
       : null
   );
+
   const [showModal, setShowModal] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -21,194 +23,201 @@ const ProfilePage = () => {
   const handleProfilePicChange = async (e) => {
     const formData = new FormData();
     formData.append("pfp", e.target.files[0]);
+
     try {
-      const response = await axiosInstance.put(
-        "/update-profile-image",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      console.log("response", response);
-      if (response.status === 200) {
-        toast.success("Profile image updated successfully!");
-      } else {
-        toast.error("Profile image update failed!");
-      }
-      sessionStorage.setItem("profilePic", response.data.user.avatar);
+      const res = await axiosInstance.put("/update-profile-image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      sessionStorage.setItem("profilePic", res.data.user.avatar);
       setProfilePic(URL.createObjectURL(e.target.files[0]));
-    } catch (error) {
-      console.error("Profile image update failed", error);
-      toast.error("Profile image update failed!");
+      toast.success("Profile image updated");
+    } catch {
+      toast.error("Image update failed");
     }
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
-    console.log({ name });
-    const response = await axiosInstance.put("/update-details", { name });
+    const res = await axiosInstance.put("/update-details", { name });
     sessionStorage.setItem("name", name);
-    if ([200, 201].includes(response.status)) {
-      return toast.success("Profile updated successfully!");
-    } else {
-      return toast.error("Profile update failed!");
-    }
+
+    res.status === 200
+      ? toast.success("Profile updated")
+      : toast.error("Update failed");
   };
 
   const handleResetPassword = async () => {
     if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match.");
+      toast.error("Passwords do not match");
       return;
     }
-    console.log({ name });
-    const response = await axiosInstance.put("/change-password", {
+
+    const res = await axiosInstance.put("/change-password", {
       email: sessionStorage.getItem("email"),
       new_password: newPassword,
       confirm_password: confirmPassword,
     });
-    console.log(response);
-    if ([200, 201].includes(response.status)) {
-      toast.success("Password updated successfully!");
-    } else {
-      toast.error("Password update failed!");
-    }
+
+    res.status === 200
+      ? toast.success("Password updated")
+      : toast.error("Password update failed");
+
     setShowModal(false);
     setNewPassword("");
     setConfirmPassword("");
-    // Add password reset API logic here
   };
 
   return (
-    <div className="bg-gradient-to-b min-h-screen w-full from-[#fad1e3] to-[#ff65aa]/10 flex flex-col items-center justify-center font-kaisei">
-      <h1
-        className="mb-8 text-3xl font-bold text-[#A55166]"
-        style={{ fontFamily: "'Julius Sans One', sans-serif" }}
-      >
-        Your Profile
-      </h1>
+    <div className="min-h-screen bg-[#0B1220] text-white px-6 py-16 font-kaisei">
+      {/* Page Header */}
+      <div className="max-w-5xl mx-auto mb-14">
+        <h1 className="text-4xl font-bold text-blue-300 mb-2">
+          Account Settings
+        </h1>
+        <p className="text-blue-200/70">
+          Manage your personal information and security preferences
+        </p>
+      </div>
 
-      <form
-        onSubmit={handleSave}
-        className="min-w-[600px] max-md:min-w-[80%] p-8 rounded-2xl shadow-lg bg-opacity-25 backdrop-blur-md border bg-[#A55166]"
-      >
-        {/* Profile Picture */}
-        <div className="mb-6 flex flex-col items-center">
+      {/* Main Layout */}
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+        {/* LEFT: Avatar Column */}
+        <motion.div
+          initial={{ opacity: 0, x: -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex flex-col items-center gap-6"
+        >
           <div
-            onClick={() => {
-              document.getElementById("profilePicInput").click();
-            }}
-            className="w-32 h-32 cursor-pointer rounded-full bg-white shadow-md mb-3 overflow-hidden"
+            onClick={() => document.getElementById("profilePicInput").click()}
+            className="w-40 h-40 rounded-2xl overflow-hidden cursor-pointer border border-blue-400/30 hover:border-blue-400 transition"
           >
             {profilePic ? (
-              <img
-                src={profilePic}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
+              <img src={profilePic} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-[#A55166] font-bold text-xl">
+              <div className="w-full h-full flex items-center justify-center text-4xl text-blue-300 bg-white/5">
                 +
               </div>
             )}
           </div>
+
+          <p className="text-sm text-blue-200/60 text-center">
+            Click to update profile picture
+          </p>
+
           <input
             type="file"
             accept="image/*"
             id="profilePicInput"
             onChange={handleProfilePicChange}
-            className="text-sm text-white hidden font-inter"
+            className="hidden"
           />
-        </div>
+        </motion.div>
 
-        {/* Name */}
-        <div className="mb-4">
-          <label className="block mb-1 text-[#A55166] font-bold font-inter">
-            Name:
-          </label>
-          <input
-            type="text"
-            placeholder="Enter your name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full p-3 shadow-md rounded-xl bg-white focus:outline-none"
-          />
-        </div>
-
-        {/* Email */}
-        <div className="mb-2">
-          <label className="block mb-1 text-[#A55166] font-bold font-inter">
-            Email:
-          </label>
-          <input
-            type="text"
-            value={sessionStorage.getItem("email")}
-            readOnly
-            className="w-full p-3 shadow-md rounded-xl bg-gray-100 text-gray-600 cursor-not-allowed"
-          />
-        </div>
-
-        {/* Forgot Password Button */}
-        <div className="mb-6 text-left">
-          <button
-            type="button"
-            onClick={() => setShowModal(true)}
-            className="text-sm font-inter font-semibold text-pink-300 bg-white px-4 py-2 rounded-full shadow-md"
-          >
-            Forgot Password?
-          </button>
-        </div>
-
-        {/* Save Button */}
-        <button
-          type="submit"
-          className="w-full bg-[#A55166] text-white py-3 rounded-xl font-bold font-inter hover:bg-[#914257] transition"
+        {/* RIGHT: Settings Panels */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="md:col-span-2 space-y-10"
         >
-          Save Changes
-        </button>
-      </form>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white w-[400px] rounded-2xl p-6 shadow-lg relative">
-            <h2 className="text-xl font-bold text-[#A55166] mb-4">
-              Reset Password
+          {/* Profile Info */}
+          <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <h2 className="text-xl font-semibold text-blue-300 mb-6">
+              Personal Information
             </h2>
+
+            <form onSubmit={handleSave} className="space-y-5">
+              <div>
+                <label className="text-sm text-blue-200">Full Name</label>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full mt-1 px-4 py-3 rounded-xl bg-[#0F172A] border border-white/10 focus:ring-2 focus:ring-blue-400 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-blue-200">Email Address</label>
+                <input
+                  readOnly
+                  value={sessionStorage.getItem("email")}
+                  className="w-full mt-1 px-4 py-3 rounded-xl bg-[#0F172A]/50 text-blue-200/60 cursor-not-allowed"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="mt-2 px-6 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 transition font-semibold"
+              >
+                Save Profile
+              </button>
+            </form>
+          </section>
+
+          {/* Security */}
+          <section className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <h2 className="text-xl font-semibold text-blue-300 mb-4">
+              Security
+            </h2>
+
+            <p className="text-sm text-blue-200/70 mb-4">
+              Update your password to keep your account secure.
+            </p>
+
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-5 py-2 rounded-lg border border-blue-400/40 text-blue-300 hover:bg-blue-400/10 transition"
+            >
+              Change Password
+            </button>
+          </section>
+        </motion.div>
+      </div>
+
+      {/* Password Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-[#0B1220] border border-white/10 rounded-2xl p-6 w-full max-w-sm"
+          >
+            <h3 className="text-lg font-semibold text-blue-300 mb-4">
+              Update Password
+            </h3>
+
             <input
               type="password"
               placeholder="New password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full mb-3 p-3 border rounded-xl focus:outline-none"
+              className="w-full mb-3 px-4 py-3 rounded-xl bg-[#0F172A] border border-white/10"
             />
             <input
               type="password"
               placeholder="Confirm password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full mb-4 p-3 border rounded-xl focus:outline-none"
+              className="w-full mb-5 px-4 py-3 rounded-xl bg-[#0F172A] border border-white/10"
             />
+
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowModal(false)}
-                className="bg-gray-300 text-[#A55166] font-semibold px-4 py-2 rounded-xl"
+                className="px-4 py-2 rounded-lg bg-white/10"
               >
                 Cancel
               </button>
               <button
                 onClick={handleResetPassword}
-                className="bg-[#A55166] text-white font-semibold px-4 py-2 rounded-xl"
+                className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600"
               >
-                Reset
+                Update
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>
   );
-};
-
-export default ProfilePage;
+}

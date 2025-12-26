@@ -1,238 +1,323 @@
 import { useState } from "react";
-import SkinmuseLogo2 from "../assets/images/skinmuselogo2.png";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
 
-const Quiz = () => {
-  const questions = [
-    {
-      question: "How does your skin usually feel a few hours after washing it?",
-      options: [
-        "Tight or rough",
-        "Shiny or greasy",
-        "Shiny in T-zone, dry on cheeks",
-        "Comfortable and balanced",
-        "Itchy, red, or easily irritated",
-      ],
-    },
-    {
-      question: "How often does your skin feel oily?",
-      options: ["Rarely", "Sometimes", "Often", "Almost always"],
-    },
-    {
-      question: "How does your skin react to the sun?",
-      options: [
-        "Burns easily",
-        "Tans gradually",
-        "Rarely burns or tans",
-        "Not sure",
-      ],
-    },
-    {
-      question: "How sensitive is your skin to skincare products?",
-      options: [
-        "Very sensitive, reacts easily",
-        "Somewhat sensitive",
-        "Not sensitive at all",
-        "Unsure",
-      ],
-    },
-    {
-      question: "How would you describe your skin's overall texture?",
-      options: [
-        "Rough or flaky",
-        "Oily and smooth",
-        "Combination (varies by area)",
-        "Soft and even",
-        "Red or irritated",
-      ],
-    },
-  ];
+// ✅ Full 17-question list based on your model options
+const questions = [
+  {
+    key: "age",
+    question: "Select your age",
+    type: "single",
+    options: Array.from({ length: 9 }, (_, i) => 18 + i),
+  },
+  {
+    key: "sleep_hours",
+    question: "How many hours do you sleep per day?",
+    type: "single",
+    options: ["0-4", "5-7", "8+"],
+  },
+  {
+    key: "daily_water_intake",
+    question: "How many liters do you drink daily?",
+    type: "single",
+    options: ["0-1", "2-3", "4+"],
+  },
+  {
+    key: "stress_level",
+    question: "How stressed do you feel daily?",
+    type: "single",
+    options: ["Low", "Moderate", "High"],
+  },
+  {
+    key: "exercise_frequency",
+    question: "How often do you exercise per week?",
+    type: "single",
+    options: ["0-1", "2-4", "5+"],
+  },
+  {
+    key: "junk_food_frequency",
+    question: "How often do you eat junk food?",
+    type: "single",
+    options: ["Never", "Occasionally", "Often"],
+  },
+  {
+    key: "dairy_intake",
+    question: "How often do you consume dairy products?",
+    type: "single",
+    options: ["Never", "Sometimes", "Daily"],
+  },
+  {
+    key: "sugar_intake",
+    question: "How often do you consume sugar?",
+    type: "single",
+    options: ["Rarely", "Sometimes", "Daily"],
+  },
+  {
+    key: "skin_type",
+    question: "What is your skin type?",
+    type: "single",
+    options: ["Oily", "Dry", "Combination", "Normal", "Sensitive"],
+  },
+  {
+    key: "skin_tone",
+    question: "What is your skin tone?",
+    type: "single",
+    options: ["Type III", "Type IV", "Type V", "Type VI"],
+  },
+  {
+    key: "primary_concern",
+    question: "Select your primary skin concern",
+    type: "single",
+    options: [
+      "Acne/Breakouts",
+      "Dark Circles",
+      "Dark Spots/Hyperpigmentation",
+      "Dryness/Dehydration",
+      "Dullness",
+      "Fine Lines",
+      "Oiliness/Large Pores",
+      "Sensitivity/Redness",
+      "Sun Damage",
+      "Uneven Skin Tone",
+    ],
+  },
+  {
+    key: "secondary_concerns",
+    question: "Select a secondary concern",
+    type: "single",
+    options: [
+      "Blackheads",
+      "Enlarged Pores",
+      "Excess Sebum",
+      "Flaky Skin",
+      "Irritation",
+      "Post-Acne Marks",
+      "Redness",
+      "Textured Skin",
+      "Under Eye Bags",
+      "Whiteheads",
+      "Unknown",
+    ],
+  },
+  {
+    key: "occupation",
+    question: "Your occupation",
+    type: "single",
+    options: [
+      "Bank Employee",
+      "Freelancer",
+      "Government Employee",
+      "Healthcare Worker",
+      "Homemaker",
+      "Hospitality",
+      "IT Professional",
+      "NGO Worker",
+      "Office Worker",
+      "Retail/Sales",
+      "Self-Employed",
+      "Student",
+      "Teacher",
+    ],
+  },
+  {
+    key: "diet_type",
+    question: "Your diet type",
+    type: "single",
+    options: ["Flexitarian", "Non-Veg", "Pescatarian", "Vegan", "Vegetarian"],
+  },
+  {
+    key: "sun_exposure",
+    question: "How much sun exposure do you get?",
+    type: "single",
+    options: ["Minimal", "Low", "Moderate", "High", "Very High"],
+  },
+  {
+    key: "sunscreen_usage",
+    question: "How often do you use sunscreen?",
+    type: "single",
+    options: ["Never", "Rarely", "Sometimes", "Often", "Daily"],
+  },
+  {
+    key: "allergies",
+    question: "Do you have any allergies?",
+    type: "single",
+    options: [
+      "Alcohol",
+      "Essential Oils",
+      "Fragrance",
+      "Multiple",
+      "Parabens",
+      "Sulfates",
+      "Unknown",
+    ],
+  },
+];
 
-  const skinTypeDescriptions = {
-    Dry: "Your skin tends to feel tight, flaky, or rough. It needs deep hydration and gentle care.",
-    Oily: "Your skin often looks shiny or greasy. Focus on lightweight, oil-controlling products.",
-    Combination:
-      "You have both oily and dry areas. Balanced care works best for you.",
-    Normal: "Your skin feels balanced and even. Gentle maintenance is key!",
-    Sensitive:
-      "Your skin reacts easily to products or the environment. Use calming, hypoallergenic products.",
-  };
+export default function Quiz() {
+  const [currentQ, setCurrentQ] = useState(-1);
+  const [answers, setAnswers] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [results, setResults] = useState(null);
+  const [advice, setAdvice] = useState("");
 
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState("");
-  const [answers, setAnswers] = useState([]);
-  const [skinType, setSkinType] = useState(null);
+  const handleAnswer = (key, value) => {
+    const newAnswers = { ...answers, [key]: value };
+    setAnswers(newAnswers);
 
-  const handleOptionClick = (option) => {
-    setSelectedOption(option);
-  };
-
-  const calculateSkinType = (answers) => {
-    const score = {
-      Dry: 0,
-      Oily: 0,
-      Combination: 0,
-      Normal: 0,
-      Sensitive: 0,
-    };
-
-    answers.forEach((answer) => {
-      if (
-        answer.includes("Tight") ||
-        answer.includes("Rough") ||
-        answer === "Rarely" ||
-        answer === "Rough or flaky"
-      )
-        score.Dry++;
-
-      if (
-        answer.includes("greasy") ||
-        answer === "Often" ||
-        answer === "Almost always" ||
-        answer === "Oily and smooth"
-      )
-        score.Oily++;
-
-      if (
-        answer.includes("T-zone") ||
-        answer === "Sometimes" ||
-        answer === "Combination (varies by area)"
-      )
-        score.Combination++;
-
-      if (
-        answer.includes("balanced") ||
-        answer === "Tans gradually" ||
-        answer === "Not sensitive at all" ||
-        answer === "Soft and even" ||
-        answer === "Rarely burns or tans"
-      )
-        score.Normal++;
-
-      if (
-        answer.includes("irritated") ||
-        answer.includes("sensitive") ||
-        answer === "Burns easily" ||
-        answer === "Red or irritated"
-      )
-        score.Sensitive++;
-    });
-
-    const sorted = Object.entries(score).sort((a, b) => b[1] - a[1]);
-    return sorted[0][0];
-  };
-
-  const handleNext = () => {
-    if (!selectedOption) {
-      alert("Please select an answer!");
-      return;
+    if (currentQ < questions.length - 1) {
+      setCurrentQ(currentQ + 1);
+    } else {
+      submitQuiz(newAnswers);
     }
+  };
 
-    const updatedAnswers = [...answers, selectedOption];
-    setAnswers(updatedAnswers);
-    setSelectedOption("");
+  const submitQuiz = async (finalAnswers) => {
+    try {
+      setSubmitting(true);
+      const res = await fetch("http://localhost:5000/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(finalAnswers),
+      });
 
-    if (currentQuestionIndex === questions.length - 1) {
-      const result = calculateSkinType(updatedAnswers);
-      setSkinType(result);
+      if (!res.ok) throw new Error("Failed to fetch recommendations");
+
+      const data = await res.json();
+      setResults(data.recommendations || {});
+      setAdvice(data.advice || "");
+      toast.success("Recommendations generated!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to get recommendations");
+    } finally {
+      setSubmitting(false);
     }
-
-    setCurrentQuestionIndex((prev) => prev + 1);
   };
 
-  const handleBack = () => {
-    if (currentQuestionIndex === 0) return;
-
-    setSelectedOption("");
-    setAnswers((prev) => prev.slice(0, -1));
-    setCurrentQuestionIndex((prev) => prev - 1);
-  };
-
-  if (skinType) {
-    const description = skinTypeDescriptions[skinType];
-
-    return (
-      <div className="bg-gradient-to-b from-[#fad1e3] to-[#ff65aa]/10 min-h-screen flex flex-col items-center justify-center font-kaisei px-4">
-        <img
-          src={SkinmuseLogo2}
-          alt="Skinmuse Logo"
-          className="mb-10 w-72 h-auto"
-        />
-        <div className="bg-white bg-opacity-20 backdrop-blur-lg border border-white/30 rounded-2xl shadow-xl p-10 w-full max-w-xl text-center font-inter">
-          <h2 className="text-3xl font-bold mb-4 text-[#d14b6e]">
-            💫 Your Skin Type is:{" "}
-            <span className="text-yellow-300">{skinType}</span>
-          </h2>
-          <p className="text-lg mb-8 text-[#d14b6e]">{description}</p>
-
-          <a
-            href="/products"
-            className="inline-block px-6 py-3 text-lg bg-[#A55166] text-white rounded-xl font-semibold hover:bg-[#914257] transition"
-          >
-            See Recommended Products
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  const currentQuestion = questions[currentQuestionIndex];
+  const progress = Math.max(0, currentQ + 1) / questions.length;
 
   return (
-    <div className="bg-gradient-to-b h-full from-[#fad1e3] to-[#ff65aa]/10 flex flex-col items-center justify-center font-kaisei min-h-screen">
-      <img
-        src={SkinmuseLogo2}
-        alt="Skinmuse Logo"
-        className="w-72 h-auto -mt-20"
-      />
-
-      <div className="w-[700px] p-8 rounded-2xl shadow-lg bg-opacity-25 backdrop-blur-md border bg-[#A55166]">
-        <h2 className="text-white text-2xl font-bold mb-6 text-center font-inter">
-          {currentQuestion.question}
-        </h2>
-
-        <div className="grid gap-4 mb-6">
-          {currentQuestion.options.map((option) => (
-            <div
-              key={option}
-              onClick={() => handleOptionClick(option)}
-              className={`p-4 rounded-xl shadow-md cursor-pointer text-center font-inter font-bold transition-transform duration-200
-                ${
-                  selectedOption === option
-                    ? "bg-[#A55166] text-white -translate-y-1"
-                    : "bg-white text-[#A55166] hover:bg-[#A55166] hover:text-white hover:-translate-y-1"
-                }
-              `}
-            >
-              {option}
+    <div className="min-h-screen bg-[#0B1220] flex items-center justify-center px-4 py-16 font-kaisei">
+      <div className="w-full max-w-3xl">
+        {/* Progress Bar */}
+        {currentQ >= 0 && !results && (
+          <div className="mb-8">
+            <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden">
+              <motion.div
+                className="bg-blue-400 h-3 rounded-full"
+                animate={{ width: `${progress * 100}%` }}
+              />
             </div>
-          ))}
-        </div>
+            <p className="text-sm mt-2 text-blue-200/70">
+              Question {currentQ + 1} of {questions.length}
+            </p>
+          </div>
+        )}
 
-        <div className="flex justify-between">
-          <button
-            onClick={handleBack}
-            disabled={currentQuestionIndex === 0}
-            className={`px-6 py-2 rounded-xl font-bold font-inter transition
-              ${
-                currentQuestionIndex === 0
-                  ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                  : "bg-[#A55166] text-white hover:bg-[#914257]"
-              }
-            `}
-          >
-            Back
-          </button>
+        <AnimatePresence mode="wait">
+          {!results ? (
+            currentQ === -1 ? (
+              <motion.div
+                key="intro"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="bg-white/5 p-8 rounded-3xl shadow-lg text-center"
+              >
+                <h2 className="text-2xl font-bold text-blue-300 mb-4">
+                  Welcome to the Skin Quiz
+                </h2>
+                <p className="text-blue-200/70 mb-6">
+                  17 questions to analyze your skin and recommend products
+                  tailored for you.
+                </p>
+                <button
+                  onClick={() => setCurrentQ(0)}
+                  className="px-8 py-3 bg-blue-500 hover:bg-blue-600 rounded-2xl transition text-white font-semibold"
+                >
+                  Start Quiz
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key={currentQ}
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -50 }}
+                className="bg-white/5 p-8 rounded-3xl shadow-lg space-y-6"
+              >
+                <h2 className="text-xl font-semibold text-blue-300">
+                  {questions[currentQ].question}
+                </h2>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {questions[currentQ].options.map((opt) => (
+                    <motion.div
+                      key={opt}
+                      onClick={() => handleAnswer(questions[currentQ].key, opt)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`cursor-pointer px-4 py-3 rounded-2xl border border-white/10 text-white text-center font-medium transition
+                        ${
+                          answers[questions[currentQ].key] === opt
+                            ? "bg-blue-500"
+                            : "bg-white/10 hover:bg-white/20"
+                        }`}
+                    >
+                      {opt}
+                    </motion.div>
+                  ))}
+                </div>
+                {submitting && (
+                  <p className="text-blue-200 mt-2">Submitting...</p>
+                )}
+              </motion.div>
+            )
+          ) : (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              className="bg-white/5 p-8 rounded-3xl shadow-lg space-y-6"
+            >
+              <h2 className="text-2xl font-bold text-blue-300 mb-4">
+                Your Recommendations
+              </h2>
 
-          <button
-            onClick={handleNext}
-            className="bg-[#A55166] text-white px-6 py-2 rounded-xl font-bold font-inter hover:bg-[#914257] transition"
-          >
-            {currentQuestionIndex === questions.length - 1 ? "Finish" : "Next"}
-          </button>
-        </div>
+              {advice && (
+                <p className="text-white/80 mb-4 whitespace-pre-line">
+                  {advice}
+                </p>
+              )}
+
+              {Object.entries(results).map(([category, recs]) => (
+                <div key={category} className="mb-4">
+                  <h3 className="text-blue-200 font-semibold mb-2">
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </h3>
+                  <ul className="list-disc list-inside text-white/80">
+                    {recs.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+
+              <button
+                onClick={() => {
+                  setCurrentQ(-1);
+                  setAnswers({});
+                  setResults(null);
+                  setAdvice("");
+                }}
+                className="px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-2xl text-white font-semibold"
+              >
+                Retake Quiz
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
-};
-
-export default Quiz;
+}

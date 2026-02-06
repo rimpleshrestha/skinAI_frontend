@@ -158,9 +158,9 @@ export default function Quiz() {
   const [answers, setAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [results, setResults] = useState(null);
-  const [advice, setAdvice] = useState("");
-  const [thinking, setThinking] = useState(false);
   const [typedAdvice, setTypedAdvice] = useState("");
+  const [thinking, setThinking] = useState(false);
+  const [showResultsList, setShowResultsList] = useState(false);
 
   const handleAnswer = (key, value) => {
     const newAnswers = { ...answers, [key]: value };
@@ -178,6 +178,7 @@ export default function Quiz() {
       setThinking(true);
       setResults(null);
       setTypedAdvice("");
+      setShowResultsList(false);
 
       const res = await fetch("http://localhost:5000/predict", {
         method: "POST",
@@ -188,17 +189,20 @@ export default function Quiz() {
       if (!res.ok) throw new Error("Failed to fetch recommendations");
       const data = await res.json();
 
-      // 5-second thinking animation
       setTimeout(() => {
         setThinking(false);
         setResults(data.recommendations || {});
 
+        // Typing effect
         let i = 0;
         const text = data.advice || "";
         const interval = setInterval(() => {
           setTypedAdvice((prev) => prev + text[i]);
           i++;
-          if (i >= text.length) clearInterval(interval);
+          if (i >= text.length) {
+            clearInterval(interval);
+            setShowResultsList(true); // show bullet points AFTER typing
+          }
         }, 30);
 
         toast.success("Recommendations generated!");
@@ -216,11 +220,8 @@ export default function Quiz() {
 
   return (
     <div className="min-h-screen bg-[#0B1220] flex items-center justify-center px-4 py-16 font-kaisei relative overflow-hidden">
-      {/* Background Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_#1E40AF_0%,_transparent_70%)] opacity-20 pointer-events-none" />
-
       <div className="w-full max-w-3xl z-10">
-        {/* Progress Bar */}
         {currentQ >= 0 && !results && !thinking && (
           <div className="mb-8">
             <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden">
@@ -246,7 +247,7 @@ export default function Quiz() {
                 className="bg-white/5 backdrop-blur-xl p-10 rounded-[2.5rem] border border-white/10 shadow-2xl text-center"
               >
                 <h2 className="text-3xl font-bold text-white mb-4">
-                  Welcome to SkinMuse
+                  Welcome to SkinAI
                 </h2>
                 <p className="text-blue-200/70 mb-8 max-w-md mx-auto">
                   Our AI will analyze your 17 inputs to build a biometric
@@ -294,7 +295,6 @@ export default function Quiz() {
               </motion.div>
             )
           ) : thinking ? (
-            /* --- BIOMETRIC WAVE LOADING STATE --- */
             <motion.div
               key="thinking"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -302,8 +302,8 @@ export default function Quiz() {
               exit={{ opacity: 0, scale: 1.1 }}
               className="flex flex-col items-center justify-center p-12 bg-white/[0.02] backdrop-blur-3xl rounded-[3rem] border border-white/10 shadow-2xl space-y-12 overflow-hidden relative"
             >
+              {/* Loading animation */}
               <div className="relative w-48 h-48 flex items-center justify-center">
-                {/* Pulsing Rings */}
                 {[1, 1.25, 1.5].map((s, i) => (
                   <motion.div
                     key={i}
@@ -320,8 +320,6 @@ export default function Quiz() {
                     }}
                   />
                 ))}
-
-                {/* Morphing Waves */}
                 <div className="relative w-32 h-32">
                   {[
                     "bg-blue-600/40",
@@ -356,7 +354,6 @@ export default function Quiz() {
                   />
                 </div>
               </div>
-
               <div className="text-center z-10">
                 <motion.h3
                   animate={{ opacity: [0.4, 1, 0.4] }}
@@ -371,7 +368,6 @@ export default function Quiz() {
               </div>
             </motion.div>
           ) : (
-            /* --- RESULTS VIEW --- */
             <motion.div
               key="results"
               initial={{ opacity: 0, y: 30 }}
@@ -388,30 +384,41 @@ export default function Quiz() {
               {typedAdvice && (
                 <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
                   <p className="text-blue-50/90 leading-relaxed whitespace-pre-line italic">
-                    "{typedAdvice}"
+                    {typedAdvice}
                   </p>
                 </div>
               )}
 
-              <div className="grid gap-6 md:grid-cols-2">
-                {Object.entries(results).map(([category, recs]) => (
-                  <div key={category} className="space-y-3">
-                    <h3 className="text-blue-400 font-bold uppercase tracking-widest text-xs">
-                      {category}
-                    </h3>
-                    <ul className="space-y-2">
-                      {recs.map((item) => (
-                        <li
-                          key={item}
-                          className="text-white/80 text-sm flex items-start gap-2"
-                        >
-                          <span className="text-blue-500">•</span> {item}
-                        </li>
+              <AnimatePresence>
+                {showResultsList && results && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="grid gap-6 md:grid-cols-2"
+                  >
+                    {Object.entries(results)
+                      .filter(([cat, recs]) => recs && recs.length > 0)
+                      .map(([category, recs]) => (
+                        <div key={category} className="space-y-3">
+                          <h3 className="text-blue-400 font-bold uppercase tracking-widest text-xs">
+                            {category}
+                          </h3>
+                          <ul className="space-y-2">
+                            {recs.map((item, idx) => (
+                              <li
+                                key={idx}
+                                className="text-white/80 text-sm flex items-start gap-2"
+                              >
+                                <span className="text-blue-500">•</span> {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <button
                 onClick={() => {
@@ -419,6 +426,7 @@ export default function Quiz() {
                   setAnswers({});
                   setResults(null);
                   setTypedAdvice("");
+                  setShowResultsList(false);
                 }}
                 className="w-full py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white font-bold transition-all"
               >
